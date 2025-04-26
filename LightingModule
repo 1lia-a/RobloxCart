@@ -1,0 +1,23 @@
+function Lighting(action, Cart)
+	local ScriptObjects = Cart.CartModel.ScriptObjects
+	local FrontLight = Cart.CartModel.Lighting.FrontLight
+	
+	local EngineLight = ScriptObjects.EngineLight
+	local LightOnOff = ScriptObjects.LightOnOff
+	
+	if action then -- Turning on
+		EngineLight.Material = Enum.Material.Neon
+		LightOnOff.Material = Enum.Material.Neon
+		FrontLight.Material = Enum.Material.Neon
+		FrontLight.SpotLight.Enabled = true
+		FrontLight.StartBeam.Beam.Enabled = true
+	else -- Turning off
+		EngineLight.Material = Enum.Material.SmoothPlastic
+		LightOnOff.Material = Enum.Material.SmoothPlastic
+		FrontLight.Material = Enum.Material.SmoothPlastic
+		FrontLight.SpotLight.Enabled = false
+		FrontLight.StartBeam.Beam.Enabled = false
+	end
+end
+
+return Lighting
