@@ -1,0 +1,45 @@
+local Cart = script.Parent.Parent
+local CartModel = Cart.CartModel
+local EngineExhausts = CartModel.ScriptObjects.Exhausts
+
+local actions = {
+	["ThrottleOn"] = function()
+		for i, vfx in pairs(EngineExhausts:GetDescendants()) do
+			if vfx:IsA("ParticleEmitter") and vfx:GetAttribute("Type") == "Throttle" then
+				vfx.Enabled = true
+			end
+		end
+	end,
+	["ThrottleOff"] = function()
+		for i, vfx in pairs(EngineExhausts:GetDescendants()) do
+			if vfx:IsA("ParticleEmitter") and vfx:GetAttribute("Type") == "Throttle" then
+				vfx.Enabled = false
+			end
+		end
+	end,
+	["Stop"] = function()
+		for i, vfx in pairs(EngineExhausts:GetDescendants()) do
+			if vfx:IsA("ParticleEmitter") and vfx:GetAttribute("Type") == "Smoke" then
+				vfx.Enabled = false
+			end
+		end
+	end,
+	["Start"] = function()
+		for i, vfx in pairs(EngineExhausts:GetDescendants()) do
+			if vfx:IsA("ParticleEmitter") and vfx:GetAttribute("Type") == "Smoke" then
+				vfx.Enabled = true
+			end
+			if vfx:IsA("ParticleEmitter") and vfx:GetAttribute("Type") == "Start" then
+				vfx:Emit(vfx:GetAttribute("EmitCount"))
+			end
+		end
+	end,
+}
+
+function EngineVFX(action)
+	if actions[action] then
+		actions[action]()
+	end
+end
+
+return EngineVFX
