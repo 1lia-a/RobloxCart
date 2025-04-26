@@ -1,0 +1,68 @@
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local Cart = script.Parent.Parent
+local CartModel = Cart.CartModel
+local Engine = CartModel.ScriptObjects.Engine
+local Main = CartModel.Parent.Main
+
+local Seat = Cart.VehicleSeat
+
+local actions = {
+	["Throttle"] = function()
+		if Engine.EngineLoop.IsPlaying then
+			TweenService:Create(Engine.EngineLoop, TweenInfo.new(1, Enum.EasingStyle.Quad), {
+				PlaybackSpeed = 1.15,
+				Volume = 1
+			}):Play()
+		end
+	end,
+	["NotThrottle"] = function()
+		if Engine.EngineLoop.IsPlaying then
+			TweenService:Create(Engine.EngineLoop, TweenInfo.new(1, Enum.EasingStyle.Quad), {
+				PlaybackSpeed = .75,
+				Volume = 1
+			}):Play()
+		end
+	end,
+	["Start"] = function()
+		Engine.EngineStartStop.TimePosition = 0
+		Engine.EngineStartStop.Volume = .5
+		Engine.EngineStartStop:Play()
+		TweenService:Create(Engine.EngineStartStop, TweenInfo.new(2, Enum.EasingStyle.Linear), {
+			Volume = 0
+		}):Play()
+		Engine.EngineLoop.Volume = 0
+		Engine.EngineLoop.PlaybackSpeed = 0
+		Engine.EngineLoop:Play()
+	end,
+	["Stop"] = function()
+		local EngineStopTween = TweenService:Create(Engine.EngineLoop, TweenInfo.new(1, Enum.EasingStyle.Linear), {
+			Volume = 0,
+			PlaybackSpeed = 0
+		})
+		EngineStopTween:Play()
+		EngineStopTween.Completed:Connect(function()
+			Engine.EngineLoop:Stop()
+		end)
+		Engine.EngineStartStop.Volume = 0
+		Engine.EngineStartStop.TimePosition = 3.5
+		TweenService:Create(Engine.EngineStartStop, TweenInfo.new(1, Enum.EasingStyle.Linear), {Volume = 1}):Play()
+		Engine.EngineStartStop:Play()
+	end,
+}
+
+RunService.Heartbeat:Connect(function()
+	local Speed = math.floor(Seat.CFrame.LookVector:Dot(Seat.AssemblyLinearVelocity))
+	Speed = math.abs(Speed)
+	if Speed <= 1 and Speed >= -1 then Main.CartWheels.PlaybackSpeed = 0 return end
+	Main.CartWheels.PlaybackSpeed = Speed / 10
+end)
+
+function EngineSFX(action)
+	if actions[action] then
+		actions[action]()
+	end
+end
+
+return EngineSFX
