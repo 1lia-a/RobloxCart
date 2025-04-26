@@ -1,0 +1,85 @@
+local Model = script.Parent -- Cart
+local Main = Model.Main -- Cart PrimaryPart.
+local Seat = Model.VehicleSeat -- Cart Seat to handle changes in properties.
+
+local SoundModule = require(script.SoundModule)-- Loading Modules.
+local VFXModule = require(script.VFXModule) -- Loading Modules. 
+local LightingModule = require(script.LightingModule) -- Loading Modules.
+
+local MaxSpeed = Seat.MaxSpeed -- Cart MaxSpeed.
+local EnginePower = 0 -- Engine power.
+
+local Cylindricals = Main.Cylindricals -- Wheels Cylindricals Folder.
+local Cylindicals = {
+	 FR_Constraint = Cylindricals.CylindricalConstraint_FR,
+	 FL_Constraint = Cylindricals.CylindricalConstraint_FL,
+	 BR_Constraint = Cylindricals.CylindricalConstraint_BR,
+	 BL_Constraint = Cylindricals.CylindricalConstraint_BL,
+} -- Wheels Cylindricals Table.
+
+local function updateAngularVelocity() -- To update angular velocity of the wheels.
+	for _, Constraint in pairs(Cylindicals) do
+		Constraint.AngularVelocity = -EnginePower
+	end
+end
+
+local ScriptObjects = Model.CartModel.ScriptObjects -- ScriptObjects of the Cart.
+local Lever = ScriptObjects.Lever.HingeConstraint -- Part for the visual effect of the lever.
+
+Seat:GetPropertyChangedSignal("Occupant"):Connect(function() -- Launching effects and sounds when Sit/Leave.
+	if Seat.Occupant then
+		SoundModule("Start")
+		VFXModule("Start")
+		LightingModule(true, Model)
+	else
+		SoundModule("Stop")
+		VFXModule("Stop")
+		LightingModule(false, Model)
+	end
+end)
+
+Seat:GetPropertyChangedSignal("Throttle"):Connect(function() -- On W,S buttons Moving the Cart.
+	if math.floor(Seat.CFrame.LookVector:Dot(Seat.AssemblyLinearVelocity)) <= 2 and math.floor(Seat.CFrame.LookVector:Dot(Seat.AssemblyLinearVelocity)) >= -2 then
+		EnginePower = 0
+		for _, Constraint in pairs(Cylindicals) do
+			Constraint.AngularVelocity = EnginePower
+		end
+	end -- Full Stop speed of the cart when speed is -2 or 2.
+
+	if Seat.Throttle == 1 then -- W Moving Forward.
+		Lever.TargetAngle = -25
+		SoundModule("Throttle")
+		VFXModule("ThrottleOn")
+		while Seat.Throttle == 1 do
+			if EnginePower ~= MaxSpeed * 2 then
+				EnginePower += 1
+			end
+			updateAngularVelocity()
+			wait(.1)
+		end
+	elseif Seat.Throttle == -1 then -- S Moving Back.
+		Lever.TargetAngle = 25
+		SoundModule("Throttle")
+		VFXModule("ThrottleOn")
+		while Seat.Throttle == -1 do
+			if EnginePower ~= -MaxSpeed * 2 then
+				EnginePower -= 1
+			end
+			updateAngularVelocity()
+			wait(.1)
+		end
+	elseif Seat.Throttle == 0 then -- No Button, Stopping the Cart.
+		Lever.TargetAngle = 0
+		SoundModule("NotThrottle")
+		VFXModule("ThrottleOff")
+		while Seat.Throttle == 0 and EnginePower ~= 0 do
+			if EnginePower > 0 then
+				EnginePower -= 1
+			elseif EnginePower < 0 then
+				EnginePower += 1
+			end
+			updateAngularVelocity()
+			wait(.15)
+		end
+	end
+end)
